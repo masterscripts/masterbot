@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         MasterBot Client
-// @version      1.2.0
+// @version      1.3.0
 // @license      MIT
 // @description  Bot client with many functions. Good UI and code.
 // @author       scar17off & bjc
-// @released_on  2022.04.06 (6st april 2022)
+// @released_on  2022.05.21 (21st may 2022)
 // =-=-=-=coders & other authors=-=-=-=
 // Bot name was suggested by Not Bot (449948380035153920)
 // sobakaya helped with UI designing (909443291198664735)
@@ -30,15 +30,15 @@
 		window.history.pushState("object or string", "Title", "/?#main");
 		if(!OWOP.cursors.paste) OWOP.cursors.paste = OWOP.cursors.stamp;
 		// jq
-		() => {
-	        let xhttpt = new XMLHttpRequest();
-	        xhttpt.open("GET", "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js");
-	        xhttpt.responseType = "text";
-	        xhttpt.addEventListener("load", function() {
-	            eval(xhttpt.response);
-	        });
-	        xhttpt.send();
-	    };
+		//() => {
+	    //    let xhttpt = new XMLHttpRequest();
+	    //    xhttpt.open("GET", "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js");
+	    //    xhttpt.responseType = "text";
+	    //    xhttpt.addEventListener("load", function() {
+	    //        eval(xhttpt.response);
+	    //    });
+	    //    xhttpt.send();
+	    //};
 	    // script
 		let Master = {};
 
@@ -154,7 +154,7 @@
 			});
 			window.MasterBot = {};
 			window.MasterBot.socket = new WebSocket("ws://masterbot-chat.glitch.me/", null, {
-				origin: location.href,
+				origin: location.host,
 				plid: OWOP.player.id
 			});
 			socket = window.MasterBot.socket;
@@ -331,7 +331,10 @@
 	        document.body.appendChild(s);
 	    };
 	    const proxyJoin = server => {
-            let ws = "wss://ws-proxy" + server + ".glitch.me";
+	    	let ws = "wss://ws-proxy" + server + ".glitch.me";
+	    	if(server.includes(".")){
+	    		ws = "wss://" + server + ".repl.co";
+	    	};
             let BotCount = parseFloat(document.getElementById("master-main-content-botcount").value);
             for (let i = 0; i < BotCount; i++) {
                 let bot = new OJS.Client({
@@ -1196,18 +1199,25 @@
             const servers = document.getElementById("master-proxy-content-list");
             for (let i in ProxyPasswords) {
                 const Proxy = ProxyPasswords[i];
+                let soc = `wss://ws-proxy${Proxy}.glitch.me/?ws=WS-STATUS`;
+                let site = `https://glitch.com/edit/#!/ws-proxy${Proxy}`;
+                if(Proxy.includes(".")){
+                	let data = Proxy.split(".");
+                	soc = `wss://${Proxy}.repl.co/?ws=WS-STATUS`;
+                	site = `https://replit.com/@${data[1]}/${data[0]}`;
+                };
                 let proxytable = document.createElement("tr");
                 proxytable.id = `master-proxy-${Proxy}`;
                 let pbanbtn = `<button style="font-size: smaller;height: 27px;" id="master-proxy-proxyban-${Proxy}">🔨</button>`;
                 if(location.host !== "ourworldofpixels.com") pbanbtn = "";
-                proxytable.innerHTML = `<td id="master-proxy-${Proxy}"><a href="https://glitch.com/edit/#!/ws-proxy${Proxy}">${Proxy}</a></td><td id="master-proxy-proxystatus-${Proxy}">❓</td><td id="master-proxy-proxyconns-${Proxy}">❓</td><td id="master-proxy-actions-${Proxy}"><button style="font-size: smaller;height: 27px;" id="master-proxy-proxyjoin-${Proxy}">Con</button><button style="font-size: smaller;height: 27px;" id="master-proxy-proxydisconnect-${Proxy}">Disc</button>${pbanbtn}<button style="font-size: smaller;height: 27px;" id="master-proxy-proxydelete-${Proxy}">❌</button></td>`;
+                proxytable.innerHTML = `<td id="master-proxy-${Proxy}"><a href="${site}">${Proxy}</a></td><td id="master-proxy-proxystatus-${Proxy}">❓</td><td id="master-proxy-proxyconns-${Proxy}">❓</td><td id="master-proxy-actions-${Proxy}"><button style="font-size: smaller;height: 27px;" id="master-proxy-proxyjoin-${Proxy}">Con</button><button style="font-size: smaller;height: 27px;" id="master-proxy-proxydisconnect-${Proxy}">Disc</button>${pbanbtn}<button style="font-size: smaller;height: 27px;" id="master-proxy-proxydelete-${Proxy}">❌</button></td>`;
                 servers.appendChild(proxytable);
                 document.getElementById(`master-proxy-proxydelete-${Proxy}`).onclick = () => {
                     delete ProxyPasswords[Proxy];
                     ProxyPasswords = ProxyPasswords.forEach(e => e !== Proxy);
                     document.getElementById(`master-proxy-${Proxy}`).style.display = "none";
                 };
-                const WSCheck = new WebSocket(`wss://ws-proxy${Proxy}.glitch.me/?ws=WS-STATUS`);
+                const WSCheck = new WebSocket(soc);
                 WSCheck.onopen = () => {
                     onlineproxy += 1;
                     if(checkingproxy !== 0) checkingproxy -= 1;
@@ -1231,7 +1241,7 @@
                     WSCheck.send("WS-STATUS");
                 };
                 WSCheck.onmessage = msg => {
-                    document.getElementById(`master-proxy-proxyconns-${Proxy}`).innerText = parseInt(msg.data.split(",")[1]) - 1;
+                    if(WSCheck.url.includes(".glitch.me")) document.getElementById(`master-proxy-proxyconns-${Proxy}`).innerText = parseInt(msg.data.split(",")[1]) - 1;
                     WSCheck.close();
                 };
                 WSCheck.onerror = () => {
@@ -1476,20 +1486,20 @@
 			<fieldset>
 				<legend class="master-text">Addons</legend>
 				<select style="width: 268px; font-size: 13px; border: solid 1px; background-color: #343434; color: #919191;" id="master-settings-content-addonlist">
-	                <option>Player List</option>
+	                <option>No addons yet :(</option>
 	            </select>
 	            <button id="master-settings-content-loadaddon">Load</button>
 			</fieldset>
-			<span class="master-text">MasterBot v1.2.0 </span><label class="master-text">by <a title="Added on release 1.1 because of Sumhex" href="https://discord.gg/7uP389qB">scar17off</a></label>
+			<span class="master-text">MasterBot v1.3.0 </span><label class="master-text">by <a title="Added on release 1.1 because of Sumhex" href="https://discord.gg/7uP389qB">scar17off</a></label>
 			<br>
-			<label class="master-text">Last update: 2022.04.10 (10st april 2022)</label>
+			<label class="master-text">Last update: 2022.05.21 (21st may 2022)</label>
 		</form>
 	</div>
 	<div id="master-nowsproxy-content" hidden>
 		<form>
 			<fieldset>
 				<legend>Proxy list</legend>
-
+				<input type="text" placeholder="Engine WS" style="margin-top: 5px;width: 140px; border: solid 1px;background-color: #343434; color: #919191; user-select: none;"></input>
 			</fieldset>
 		</form>
 	</div>
@@ -2319,13 +2329,11 @@
 		let styleblock = document.createElement("style");
 		document.body.appendChild(styleblock);
 		document.getElementById("master-settings-content-toolset").onchange = () => {
-			style.innerHTML = `
-				<style>
-					button[id^="tool-"]:not(.selected) > div {
-					    background-image: url("https://github.com/scar17off/OCM/blob/main/packages/masterbot/toolsets/${document.getElementById("master-settings-content-toolset").value.toString().toLowerCase().replace(" ", "-")}.png?raw=true") !important;
-					    background-color: rgba(69, 69, 69, 1);
-					}
-				</style>
+			styleblock.innerHTML = `
+button[id^="tool-"]:not(.selected) > div {
+    background-image: url("https://github.com/scar17off/OCM/blob/main/packages/masterbot/toolsets/${document.getElementById("master-settings-content-toolset").value.toString().toLowerCase().replace(" ", "-")}.png?raw=true") !important;
+    background-color: rgba(69, 69, 69, 1);
+}
 			`;
 		};
 		document.getElementById("master-settings-content-botnickname").onchange = () => {
